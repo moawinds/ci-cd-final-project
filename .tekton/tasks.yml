@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: remove
+      image: alpine:3
+      env:
+        - name: WORKSPACE_SOURCE_PATH
+          value: $(workspaces.source.path)
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        echo "Menghapus semua file dari ${WORKSPACE_SOURCE_PATH} ..."
+        if [ -d "${WORKSPACE_SOURCE_PATH}" ] ; then
+          # Hapus file dan direktori yang tidak tersembunyi
+          rm -rf "${WORKSPACE_SOURCE_PATH:?}"/*
+          # Hapus file dan direktori yang diawali dengan . tetapi kecuali ..
+          rm -rf "${WORKSPACE_SOURCE_PATH}"/.[!.]*
+          # Hapus file dan direktori yang diawali dengan .. ditambah karakter lainnya
+          rm -rf "${WORKSPACE_SOURCE_PATH}"/..?*
+        fi
